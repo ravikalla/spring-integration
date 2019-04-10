@@ -55,6 +55,13 @@ public class FileCopyConfig {
         return sourceReader;
     }
 
+    @Bean
+    @Transformer(inputChannel="payorFileSource", outputChannel="payorFileContent")
+    public FileToStringTransformer transformFileToString() {
+    	FileToStringTransformer objFileToStringTransformer = new FileToStringTransformer();
+    	return objFileToStringTransformer;
+    }
+
 //	@Bean
 //    @ServiceActivator(inputChannel = "fileChannel", outputChannel="payorRawStringChannel")
 //    public MessageHandler fileWritingMessageHandler() {
@@ -65,14 +72,6 @@ public class FileCopyConfig {
 //
 //        return handler;
 //    }
-
-    @Bean
-    @Transformer(inputChannel="payorFileSource", outputChannel="payorFileContent")
-    public FileToStringTransformer transformFileToString() {
-    	FileToStringTransformer objFileToStringTransformer = new FileToStringTransformer();
-//    	objFileToStringTransformer.setDeleteFiles(true);
-    	return objFileToStringTransformer;
-    }
 
     @Splitter(inputChannel="payorFileContent", outputChannel="payorRawStringChannel")
     public List<String> splitFileContentToLines(String strFileContent) {
@@ -91,16 +90,19 @@ public class FileCopyConfig {
     @Bean
     @Transformer(inputChannel="payorRawStringChannel", outputChannel="payorRawObjectChannel")
     public GenericTransformer<String, Payor> transformPayorStringToObject() {
-    	return new GenericTransformer<String, Payor>() {
+    	GenericTransformer<String, Payor> genericTransformer = new GenericTransformer<String, Payor>() {
     		@Override
     		public Payor transform(String strPayor) {
     			String[] arrPayorData = strPayor.split(",");
-    			Payor objPayor = null;
+    			Payor objPayor;
     			if (null != arrPayorData && arrPayorData.length > 1)
     				objPayor = new Payor(Integer.parseInt(arrPayorData[0]), arrPayorData[1]);
+    			else
+    				objPayor = new Payor();
     			return objPayor;
     		}
     	};
+    	return genericTransformer;
     }
 
     @Filter(inputChannel="payorRawObjectChannel", outputChannel="filteredPayorChannel")
